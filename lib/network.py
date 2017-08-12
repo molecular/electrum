@@ -184,6 +184,7 @@ class Network(util.DaemonThread):
     """
 
     def __init__(self, config=None):
+        self.switching_to_cash = False
         if config is None:
             config = {}  # Do not use mutables as default values!
         util.DaemonThread.__init__(self)
@@ -239,8 +240,10 @@ class Network(util.DaemonThread):
         self.auto_connect = self.config.get('auto_connect', True)
         self.connecting = set()
         self.socket_queue = Queue.Queue()
+
         self.start_network(deserialize_server(self.default_server)[2],
                            deserialize_proxy(self.config.get('proxy')))
+
 
     def register_callback(self, callback, events):
         with self.lock:
@@ -621,6 +624,7 @@ class Network(util.DaemonThread):
                 self.sub_cache[k] = response
             # Response is now in canonical form
             self.process_response(interface, response, callbacks)
+        self.switch_to_cash_chain()
 
     def send(self, messages, callback):
         '''Messages is a list of (method, params) tuples'''
@@ -702,6 +706,7 @@ class Network(util.DaemonThread):
             if server in self.connecting:
                 self.connecting.remove(server)
             if socket:
+
                 self.new_interface(server, socket)
             else:
                 self.connection_down(server)
@@ -1017,6 +1022,7 @@ class Network(util.DaemonThread):
         return out
 
     def follow_chain(self, index):
+        self.print_msg("follow_chain(%i)" % (index))
         blockchain = self.blockchains.get(index)
         if blockchain:
             self.blockchain_index = index
@@ -1048,6 +1054,19 @@ class Network(util.DaemonThread):
         if r.get('error'):
             raise BaseException(r.get('error'))
         return r.get('result')
+
+    def switch_to_cash_chain(self):
+        if self.switching_to_cash:
+            return
+        self.switching_to_cash = True
+        if not self.blockchains[self.blockchain_index].is_cash_chain():
+            self.print_msg("blockchain is not cash chain, trying to find a cash chain...")
+            for bc in self.blockchains.values():
+                if bc.is_cash_chain():
+                    self.print_msg("found a cash chain, following %i..." % (bc.get_checkpoint()))
+                    self.follow_chain(bc.get_checkpoint())
+                    break;
+        self.switching_to_cash = False
 
     def broadcast(self, tx, timeout=30):
         tx_hash = tx.txid()

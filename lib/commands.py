@@ -80,6 +80,9 @@ def command(s):
         known_commands[name] = Command(func, s)
         @wraps(func)
         def func_wrapper(*args, **kwargs):
+            c = known_commands[func.__name__]
+            if c.requires_wallet and args[0].wallet is None:
+                raise BaseException("wallet not loaded. Use 'electron-cash daemon load_wallet'")
             return func(*args, **kwargs)
         return func_wrapper
     return decorator
@@ -100,6 +103,9 @@ class Commands:
             password = password_getter()
             if password is None:
                 return
+        else:
+            password = None
+
         f = getattr(self, method)
         if cmd.requires_password:
             result = f(*args, **{'password':password})

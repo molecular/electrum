@@ -52,6 +52,10 @@ from electrum import Transaction, mnemonic
 from electrum import util, bitcoin, commands, coinchooser
 from electrum import SimpleConfig, paymentrequest
 from electrum.wallet import Wallet, Multisig_Wallet
+try:
+    from electrum.plot import plot_history
+except:
+    plot_history = None
 
 from amountedit import AmountEdit, BTCAmountEdit, MyLineEdit, BTCkBEdit
 from qrcodewidget import QRCodeWidget, QRDialog
@@ -289,9 +293,7 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
         elif event == 'verified':
             self.history_list.update_item(*args)
         elif event == 'fee':
-            if self.config.is_dynfee():
-                self.fee_slider.update()
-                self.do_update_fee()
+            pass
         else:
             self.print_error("unexpected network_qt signal:", event, args)
 
@@ -465,7 +467,7 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
         invoices_menu = wallet_menu.addMenu(_("Invoices"))
         invoices_menu.addAction(_("Import"), lambda: self.invoice_list.import_invoices())
         hist_menu = wallet_menu.addMenu(_("&History"))
-        hist_menu.addAction("Plot", self.plot_history_dialog)
+        hist_menu.addAction("Plot", self.plot_history_dialog).setEnabled(plot_history is not None)
         hist_menu.addAction("Export", self.export_history_dialog)
 
         wallet_menu.addSeparator()
@@ -1146,9 +1148,6 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
         '''Recalculate the fee.  If the fee was manually input, retain it, but
         still build the TX to see if there are enough funds.
         '''
-        if not self.config.get('offline') and self.config.is_dynfee() and not self.config.has_fee_estimates():
-            self.statusBar().showMessage(_('Waiting for fee estimates...'))
-            return False
         freeze_fee = (self.fee_e.isModified()
                       and (self.fee_e.text() or self.fee_e.hasFocus()))
         amount = '!' if self.is_max else self.amount_e.get_amount()
@@ -2173,7 +2172,8 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
             self.show_message(_("Your labels were imported from") + " '%s'" % str(labelsFile))
         except (IOError, os.error) as reason:
             self.show_critical(_("Electron Cash was unable to import your labels.") + "\n" + str(reason))
-
+        self.address_list.update()
+        self.history_list.update()
 
     def do_export_labels(self):
         labels = self.wallet.labels
@@ -2182,7 +2182,7 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
             if fileName:
                 with open(fileName, 'w+') as f:
                     json.dump(labels, f, indent=4, sort_keys=True)
-                self.show_message(_("Your labels where exported to") + " '%s'" % str(fileName))
+                self.show_message(_("Your labels were exported to") + " '%s'" % str(fileName))
         except (IOError, os.error), reason:
             self.show_critical(_("Electron Cash was unable to export your labels.") + "\n" + str(reason))
 
@@ -2214,16 +2214,13 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
         self.show_message(_("Your wallet history has been successfully exported."))
 
     def plot_history_dialog(self):
-        try:
-            from electrum.plot import plot_history
-            wallet = self.wallet
-            history = wallet.get_history()
-            if len(history) > 0:
-                plt = plot_history(self.wallet, history)
-                plt.show()
-        except BaseException as e:
-            self.show_error(str(e))
+        if plot_history is None:
             return
+        wallet = self.wallet
+        history = wallet.get_history()
+        if len(history) > 0:
+            plt = plot_history(self.wallet, history)
+            plt.show()
 
     def do_export_history(self, wallet, fileName, is_csv):
         history = wallet.get_history()
@@ -2400,24 +2397,13 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
         nz.valueChanged.connect(on_nz)
         gui_widgets.append((nz_label, nz))
 
-        def on_dynfee(x):
-            self.config.set_key('dynamic_fees', x == Qt.Checked)
-            self.fee_slider.update()
-            update_maxfee()
-        dynfee_cb = QCheckBox(_('Use dynamic fees'))
-        dynfee_cb.setChecked(self.config.is_dynfee())
-        dynfee_cb.setToolTip(_("Use fees recommended by the server."))
-        fee_widgets.append((dynfee_cb, None))
-        dynfee_cb.stateChanged.connect(on_dynfee)
-
         def on_maxfee(x):
             m = maxfee_e.get_amount()
             if m: self.config.set_key('max_fee_rate', m)
             self.fee_slider.update()
         def update_maxfee():
-            d = self.config.is_dynfee()
-            maxfee_e.setDisabled(d)
-            maxfee_label.setDisabled(d)
+            maxfee_e.setDisabled(False)
+            maxfee_label.setDisabled(False)
         maxfee_label = HelpLabel(_('Max static fee'), _('Max value of the static fee slider'))
         maxfee_e = BTCkBEdit(self.get_decimal_point)
         maxfee_e.setAmount(self.config.max_fee_rate())
@@ -2595,7 +2581,7 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
 
         def on_unconf(x):
             self.config.set_key('confirmed_only', bool(x))
-        conf_only = self.config.get('confirmed_only', True)
+        conf_only = self.config.get('confirmed_only', False)
         unconf_cb = QCheckBox(_('Spend only confirmed coins'))
         unconf_cb.setToolTip(_('Spend only confirmed inputs.'))
         unconf_cb.setChecked(conf_only)

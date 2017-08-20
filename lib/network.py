@@ -51,13 +51,18 @@ DEFAULT_PORTS = {'t':'50001', 's':'50002'}
 #then gradually switch remaining nodes to e-x nodes
 
 DEFAULT_SERVERS = {
-    'electroncash.cascharia.com': {'s': '50002'},
-    'electrum-abc.criptolayer.net': {'s': '50012'},
-    '180.235.49.196': DEFAULT_PORTS,
     '35.185.209.69': DEFAULT_PORTS,
     '35.197.25.235': DEFAULT_PORTS,
-    '35.158.236.146': DEFAULT_PORTS,
+    'abc.vom-stausee.de': {'t': '52001', 's': '52002'},
+    'abc1.hsmiths.com': {'t': '60001', 's': '60002'},
     'bcc.arihanc.com': {'t':'52001', 's':'52002'},
+    'electron.coinucopia.io': DEFAULT_PORTS,
+    'electron.ueo.ch': DEFAULT_PORTS,
+    'electroncash.bitcoinplug.com': DEFAULT_PORTS,
+    'electroncash.cascharia.com': {'s': '50002'},
+    'electrum-abc.criptolayer.net': {'s': '50012'},
+    'mash.1209k.com': DEFAULT_PORTS,
+    'shsmithgoggryfbx.onion': {'t': '60001', 's': '60002'},
 }
 
 def set_testnet():
@@ -260,12 +265,14 @@ class Network(util.DaemonThread):
             callbacks = self.callbacks[event][:]
         [callback(event, *args) for callback in callbacks]
 
+    def recent_servers_file(self):
+        return os.path.join(self.config.path, "recent-servers")
+
     def read_recent_servers(self):
         if not self.config.path:
             return []
-        path = os.path.join(self.config.path, "recent_servers")
         try:
-            with open(path, "r") as f:
+            with open(self.recent_servers_file(), "r") as f:
                 data = f.read()
                 return json.loads(data)
         except:
@@ -274,10 +281,9 @@ class Network(util.DaemonThread):
     def save_recent_servers(self):
         if not self.config.path:
             return
-        path = os.path.join(self.config.path, "recent_servers")
         s = json.dumps(self.recent_servers, indent=4, sort_keys=True)
         try:
-            with open(path, "w") as f:
+            with open(self.recent_servers_file(), "w") as f:
                 f.write(s)
         except:
             pass
@@ -761,6 +767,7 @@ class Network(util.DaemonThread):
         connect = interface.blockchain.connect_chunk(index, result)
         # If not finished, get the next chunk
         if not connect:
+            self.connection_down(interface.server)
             return
         if interface.blockchain.height() < interface.tip:
             self.request_chunk(interface, index+1)
@@ -1009,7 +1016,6 @@ class Network(util.DaemonThread):
     def blockchain(self):
         if self.interface and self.interface.blockchain is not None:
             self.blockchain_index = self.interface.blockchain.checkpoint
-            self.config.set_key('blockchain_index', self.blockchain_index)
         return self.blockchains[self.blockchain_index]
 
     def get_blockchains(self):

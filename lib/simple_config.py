@@ -100,6 +100,9 @@ class SimpleConfig(PrintError):
             if os.path.exists(electrum_path):
                 # Deliberately don't copy config
                 shutil.copytree(os.path.join(electrum_path, 'wallets'), os.path.join(path, 'wallets'))
+        obsolete_file = os.path.join(path, 'recent_servers')
+        if os.path.exists(obsolete_file):
+            os.remove(obsolete_file)
         self.print_error("electron-cash directory", path)
         return path
 
@@ -238,16 +241,8 @@ class SimpleConfig(PrintError):
     def has_fee_estimates(self):
         return len(self.fee_estimates)==4
 
-    def is_dynfee(self):
-        return self.get('dynamic_fees', True)
-
     def fee_per_kb(self):
-        dyn = self.is_dynfee()
-        if dyn:
-            fee_rate = self.dynfee(self.get('fee_level', 2))
-        else:
-            fee_rate = self.get('fee_per_kb', self.max_fee_rate()/2)
-        return fee_rate
+        return self.get('fee_per_kb', self.max_fee_rate()/2)
 
     def get_video_device(self):
         device = self.get("video_device", "default")
@@ -288,7 +283,7 @@ def read_user_config(path):
             data = f.read()
         result = json.loads(data)
     except:
-        print_msg("Warning: Cannot read config file.", config_path)
+        print_error("Warning: Cannot read config file.", config_path)
         return {}
     if not type(result) is dict:
         return {}

@@ -191,6 +191,8 @@ class NetworkChoiceLayout(object):
         tabs.addTab(blockchain_tab, _('Overview'))
         tabs.addTab(proxy_tab, _('Proxy'))
         tabs.addTab(server_tab, _('Server'))
+        if wizard:
+            tabs.setCurrentIndex(2)
 
         # server tab
         grid = QGridLayout(server_tab)
@@ -467,6 +469,7 @@ class NetworkChoiceLayout(object):
             self.proxy_user.setText("")
             self.proxy_password.setText("")
             self.tor_cb.setChecked(True)
+        self.set_proxy()
 
     def proxy_settings_changed(self):
         self.tor_cb.setChecked(False)

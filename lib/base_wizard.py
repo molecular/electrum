@@ -223,7 +223,7 @@ class BaseWizard(object):
             self.on_hw_derivation(name, device_info, "m/45'/0")
         else:
             f = lambda x: self.run('on_hw_derivation', name, device_info, str(x))
-            self.derivation_dialog(f)
+            self.derivation_dialog_145(f)
 
     def derivation_dialog(self, f):
         default = bip44_derivation(0)

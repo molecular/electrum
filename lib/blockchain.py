@@ -378,6 +378,10 @@ class Blockchain(util.PrintError):
             return False
         return True
 
+    # return True if chain is ("potentially" if height is pre-fork, "definitely" otherwise) the cash chain
+    def is_cash_chain(self):
+        return self.height() < BITCOIN_CASH_FORK_BLOCK_HEIGHT or hash_header(self.read_header(BITCOIN_CASH_FORK_BLOCK_HEIGHT)) == BITCOIN_CASH_FORK_BLOCK_HASH
+
     def connect_chunk(self, idx, hexdata):
         try:
             data = hexdata.decode('hex')
@@ -386,5 +390,5 @@ class Blockchain(util.PrintError):
             self.save_chunk(idx, data)
             return True
         except BaseException as e:
-            self.print_error('verify_chunk failed', str(e))
+            #self.print_error('verify_chunk failed', str(e))
             return False

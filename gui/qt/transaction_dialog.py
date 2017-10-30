@@ -27,15 +27,15 @@ import copy
 import datetime
 import json
 
-import PyQt4
-from PyQt4.QtGui import *
-from PyQt4.QtCore import *
-import PyQt4.QtCore as QtCore
+import PyQt5
+from PyQt5.QtGui import *
+from PyQt5.QtCore import *
+import PyQt5.QtCore as QtCore
 
-from electrum import transaction
-from electrum.bitcoin import base_encode
-from electrum.i18n import _
-from electrum.plugins import run_hook
+from electroncash import transaction
+from electroncash.bitcoin import base_encode
+from electroncash.i18n import _
+from electroncash.plugins import run_hook
 
 from util import *
 
@@ -212,7 +212,7 @@ class TxDialog(QDialog, MessageBoxMixin):
         size_str = _("Size:") + ' %d bytes'% size
         fee_str = _("Fee") + ': %s'% (format_amount(fee) + ' ' + base_unit if fee is not None else _('unknown'))
         if fee is not None:
-            fee_str += '  ( %s )' % (format_amount(fee * 1000 / size) + ' ' + base_unit + '/kB')
+            fee_str += ' ({:.2f} Sat/B)'.format(float(fee) / size)
         self.amount_label.setText(amount_str)
         self.fee_label.setText(fee_str)
         self.size_label.setText(size_str)

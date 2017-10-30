@@ -28,16 +28,17 @@ import threading
 import time
 import xmlrpclib
 
-from PyQt4.QtGui import *
-from PyQt4.QtCore import *
+from PyQt5.QtGui import *
+from PyQt5.QtCore import *
+from PyQt5.QtWidgets import QPushButton
 
-from electrum import bitcoin, util
-from electrum import transaction
-from electrum.plugins import BasePlugin, hook
-from electrum.i18n import _
-from electrum.wallet import Multisig_Wallet
+from electroncash import bitcoin, util
+from electroncash import transaction
+from electroncash.plugins import BasePlugin, hook
+from electroncash.i18n import _
+from electroncash.wallet import Multisig_Wallet
 
-from electrum_gui.qt.transaction_dialog import show_transaction
+from electroncash_gui.qt.transaction_dialog import show_transaction
 
 import sys
 import traceback
@@ -81,10 +82,14 @@ class Listener(util.DaemonThread):
                 if message:
                     self.received.add(keyhash)
                     self.print_error("received message for", keyhash)
-                    self.parent.obj.emit(SIGNAL("cosigner:receive"), keyhash,
-                                         message)
+                    self.parent.obj.cosigner_receive_signal.emit(
+                        keyhash, message)
             # poll every 30 seconds
             time.sleep(30)
+
+
+class QReceiveSignalObject(QObject):
+    cosigner_receive_signal = pyqtSignal(object, object)
 
 
 class Plugin(BasePlugin):
@@ -92,8 +97,8 @@ class Plugin(BasePlugin):
     def __init__(self, parent, config, name):
         BasePlugin.__init__(self, parent, config, name)
         self.listener = None
-        self.obj = QObject()
-        self.obj.connect(self.obj, SIGNAL('cosigner:receive'), self.on_receive)
+        self.obj = QReceiveSignalObject()
+        self.obj.cosigner_receive_signal.connect(self.on_receive)
         self.keys = []
         self.cosigner_list = []
 
@@ -158,7 +163,7 @@ class Plugin(BasePlugin):
             d.cosigner_send_button.hide()
 
     def cosigner_can_sign(self, tx, cosigner_xpub):
-        from electrum.keystore import is_xpubkey, parse_xpubkey
+        from electroncash.keystore import is_xpubkey, parse_xpubkey
         xpub_set = set([])
         for txin in tx.inputs():
             for x_pubkey in txin['x_pubkeys']:

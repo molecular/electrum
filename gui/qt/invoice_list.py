@@ -25,9 +25,9 @@
 
 
 from util import *
-from electrum.i18n import _
-from electrum.util import block_explorer_URL, format_satoshis, format_time
-from electrum.plugins import run_hook
+from electroncash.i18n import _
+from electroncash.util import block_explorer_URL, format_satoshis, format_time
+from electroncash.plugins import run_hook
 
 class InvoiceList(MyTreeWidget):
     filter_columns = [0, 1, 2, 3]  # Date, Requestor, Description, Amount
@@ -35,7 +35,7 @@ class InvoiceList(MyTreeWidget):
     def __init__(self, parent):
         MyTreeWidget.__init__(self, parent, self.create_menu, [_('Expires'), _('Requestor'), _('Description'), _('Amount'), _('Status')], 2)
         self.setSortingEnabled(True)
-        self.header().setResizeMode(1, QHeaderView.Interactive)
+        self.header().setSectionResizeMode(1, QHeaderView.Interactive)
         self.setColumnWidth(1, 200)
 
     def on_update(self):
@@ -59,10 +59,10 @@ class InvoiceList(MyTreeWidget):
 
     def import_invoices(self):
         wallet_folder = self.parent.get_wallet_folder()
-        filename = unicode(QFileDialog.getOpenFileName(self.parent, "Select your wallet file", wallet_folder))
+        filename, __ = QFileDialog.getOpenFileName(self.parent, "Select your wallet file", wallet_folder)
         if not filename:
             return
-        self.parent.invoices.import_file(filename)
+        self.parent.invoices.import_file(unicode(filename))
         self.on_update()
 
     def create_menu(self, position):

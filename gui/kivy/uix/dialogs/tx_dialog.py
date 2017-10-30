@@ -5,9 +5,9 @@ from kivy.lang import Builder
 from kivy.clock import Clock
 from kivy.uix.label import Label
 
-from electrum_gui.kivy.i18n import _
+from electroncash_gui.kivy.i18n import _
 from datetime import datetime
-from electrum.util import InvalidPassword
+from electroncash.util import InvalidPassword
 
 Builder.load_string('''
 
@@ -73,7 +73,7 @@ Builder.load_string('''
             Button:
                 size_hint: 0.5, None
                 height: '48dp'
-                text: _('Sign') if root.can_sign else _('Broadcast') if root.can_broadcast else else ''
+                text: _('Sign') if root.can_sign else _('Broadcast') if root.can_broadcast else ''
                 disabled: not(root.can_sign or root.can_broadcast)
                 opacity: 0 if self.disabled else 1
                 on_release:
@@ -144,7 +144,7 @@ class TxDialog(Factory.Popup):
         self.app.broadcast(self.tx)
 
     def show_qr(self):
-        from electrum.bitcoin import base_encode
+        from electroncash.bitcoin import base_encode
         text = str(self.tx).decode('hex')
         text = base_encode(text, base=43)
         self.app.qr_dialog(_("Raw Transaction"), text)

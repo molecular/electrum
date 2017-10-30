@@ -68,7 +68,6 @@ from contacts import Contacts
 
 
 TX_STATUS = [
-    _('Replaceable'),
     _('Unconfirmed parent'),
     _('Low fee'),
     _('Unconfirmed'),
@@ -765,7 +764,6 @@ class Abstract_Wallet(PrintError):
             tx = self.transactions.get(tx_hash)
             if not tx:
                 return 3, 'unknown'
-            is_final = tx and tx.is_final()
             fee = self.tx_fees.get(tx_hash)
             if fee and self.network and self.network.config.has_fee_estimates():
                 size = len(tx.raw)/2
@@ -773,20 +771,18 @@ class Abstract_Wallet(PrintError):
                 is_lowfee = fee < low_fee * 0.5
             else:
                 is_lowfee = False
-            if height==0 and not is_final:
+            if height < 0:
                 status = 0
-            elif height < 0:
-                status = 1
             elif height == 0 and is_lowfee:
-                status = 2
+                status = 1
             elif height == 0:
-                status = 3
+                status = 2
             else:
-                status = 4
+                status = 3
         else:
-            status = 4 + min(conf, 6)
+            status = 3 + min(conf, 6)
         time_str = format_time(timestamp) if timestamp else _("unknown")
-        status_str = TX_STATUS[status] if status < 5 else time_str
+        status_str = TX_STATUS[status] if status < 4 else time_str
         return status, status_str
 
     def relayfee(self):
@@ -1073,11 +1069,21 @@ class Abstract_Wallet(PrintError):
             tx = Transaction(self.network.synchronous_get(request))
         return tx
 
-    def add_hw_info(self, tx):
-        # add previous tx for hw wallets
+    def add_input_values_to_tx(self, tx):
+        """ add input values to the tx, for signing"""
         for txin in tx.inputs():
-            tx_hash = txin['prevout_hash']
-            txin['prev_tx'] = self.get_input_tx(tx_hash)
+            if 'value' not in txin:
+                inputtx = self.get_input_tx(txin['prevout_hash'])
+                if inputtx is not None:
+                    out_zero, out_addr, out_val = inputtx.outputs()[txin['prevout_n']]
+                    txin['value'] = out_val
+                    txin['prev_tx'] = inputtx   # may be needed by hardware wallets
+
+    def add_hw_info(self, tx):
+        # add previous tx for hw wallets, if not already there
+        for txin in tx.inputs():
+            if 'prev_tx' not in txin:
+                txin['prev_tx'] = self.get_input_tx(txin['prevout_hash'])
         # add output info for hw wallets
         info = {}
         xpubs = self.get_master_public_keys()
@@ -1094,6 +1100,8 @@ class Abstract_Wallet(PrintError):
     def sign_transaction(self, tx, password):
         if self.is_watching_only():
             return
+        # add input values for signing
+        self.add_input_values_to_tx(tx)
         # hardware wallets require extra info
         if any([(isinstance(k, Hardware_KeyStore) and k.can_sign(tx)) for k in self.get_keystores()]):
             self.add_hw_info(tx)

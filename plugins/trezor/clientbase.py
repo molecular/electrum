@@ -1,10 +1,10 @@
 import time
 from struct import pack
 
-from electrum.i18n import _
-from electrum.util import PrintError, UserCancelled
-from electrum.keystore import bip39_normalize_passphrase
-from electrum.bitcoin import serialize_xpub
+from electroncash.i18n import _
+from electroncash.util import PrintError, UserCancelled
+from electroncash.keystore import bip39_normalize_passphrase
+from electroncash.bitcoin import serialize_xpub
 
 
 class GuiMixin(object):
@@ -229,7 +229,7 @@ class TrezorClientBase(GuiMixin, PrintError):
 
     @staticmethod
     def wrap_methods(cls):
-        for method in ['apply_settings', 'change_pin', 'decrypt_message',
+        for method in ['apply_settings', 'change_pin',
                        'get_address', 'get_public_node',
                        'load_device_by_mnemonic', 'load_device_by_xprv',
                        'recovery_device', 'reset_device', 'sign_message',

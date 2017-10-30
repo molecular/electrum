@@ -27,10 +27,10 @@
 import webbrowser
 
 from util import *
-from electrum.i18n import _
-from electrum.util import block_explorer_URL, format_satoshis, format_time
-from electrum.plugins import run_hook
-from electrum.bitcoin import is_address
+from electroncash.i18n import _
+from electroncash.util import block_explorer_URL, format_satoshis, format_time
+from electroncash.plugins import run_hook
+from electroncash.bitcoin import is_address
 
 
 class AddressList(MyTreeWidget):
@@ -43,7 +43,7 @@ class AddressList(MyTreeWidget):
     def on_update(self):
         self.wallet = self.parent.wallet
         item = self.currentItem()
-        current_address = item.data(0, Qt.UserRole).toString() if item else None
+        current_address = str(item.data(0, Qt.UserRole)) if item else None
         self.clear()
         receiving_addresses = self.wallet.get_receiving_addresses()
         change_addresses = self.wallet.get_change_addresses()
@@ -73,9 +73,9 @@ class AddressList(MyTreeWidget):
                     address_item.setData(0, Qt.UserRole, address)
                     address_item.setData(0, Qt.UserRole+1, True) # label can be edited
                     if self.wallet.is_frozen(address):
-                        address_item.setBackgroundColor(0, QColor('lightblue'))
+                        address_item.setBackground(0, QColor('lightblue'))
                     if self.wallet.is_beyond_limit(address, is_change):
-                        address_item.setBackgroundColor(0, QColor('red'))
+                        address_item.setBackground(0, QColor('red'))
                     if is_used:
                         if not used_flag:
                             seq_item.insertChild(0, used_item)
@@ -87,7 +87,7 @@ class AddressList(MyTreeWidget):
                         self.setCurrentItem(address_item)
 
     def create_menu(self, position):
-        from electrum.wallet import Multisig_Wallet
+        from electroncash.wallet import Multisig_Wallet
         is_multisig = isinstance(self.wallet, Multisig_Wallet)
         can_delete = self.wallet.can_delete_address()
         selected = self.selectedItems()
@@ -135,4 +135,3 @@ class AddressList(MyTreeWidget):
 
         run_hook('receive_menu', menu, addrs, self.wallet)
         menu.exec_(self.viewport().mapToGlobal(position))
-

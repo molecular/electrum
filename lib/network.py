@@ -63,6 +63,7 @@ DEFAULT_SERVERS = {
     'electrum-abc.criptolayer.net': {'s': '50012'},
     'mash.1209k.com': DEFAULT_PORTS,
     'shsmithgoggryfbx.onion': {'t': '60001', 's': '60002'},
+    '35.157.238.5': DEFAULT_PORTS,
 }
 
 def set_testnet():
@@ -71,13 +72,6 @@ def set_testnet():
     DEFAULT_SERVERS = {
         '180.235.49.196': DEFAULT_PORTS,
         'electrum-testnet-abc.criptolayer.net': {'s': '50112'},
-    }
-
-def set_nolnet():
-    global DEFAULT_PORTS, DEFAULT_SERVERS
-    DEFAULT_PORTS = {'t':'52001', 's':'52002'}
-    DEFAULT_SERVERS = {
-        '14.3.140.101': DEFAULT_PORTS,
     }
 
 NODES_RETRY_INTERVAL = 60

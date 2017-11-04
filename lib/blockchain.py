@@ -432,25 +432,35 @@ class Blockchain(util.PrintError):
         new_target = (prior_target * span) / target_span
         return target_to_bits(new_target)
 
-    def can_connect(self, header, check_height=True):
+    def can_connect(self, header, check_height=True, test_mode=False):
         height = header['block_height']
         if check_height and self.height() != height - 1:
+            if test_mode: print "height wrong"
             return False
         if height == 0:
+            if test_mode: print "checking genesis hash"
             return hash_header(header) == bitcoin.GENESIS
         previous_header = self.read_header(height -1)
         if not previous_header:
+            if test_mode: print "no previous header"
             return False
         prev_hash = hash_header(previous_header)
         if prev_hash != header.get('prev_block_hash'):
+            if test_mode: print "prev hash wrong"
             return False
         height = header.get('block_height')
         bits = self.get_bits(height)
+
+        if test_mode and height % 144 == 0: print("height: %lu bits: %lx" % (height, bits))
+
         try:
             self.verify_header(header, previous_header, bits)
-        except:
-            #self.print_error('can_connect: verify_header failed');
-            return False
+        except BaseException as e:
+            # ignore "insufficient proof of work exceptions" for being able to read PoW-less header test data
+            if not test_mode or not str(e).startswith("insufficient proof of work"):
+                print "verify_header() fails"
+                print e
+                return False
         return True
 
     def connect_chunk(self, idx, hexdata):

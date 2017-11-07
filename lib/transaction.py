@@ -50,6 +50,9 @@ NO_SIGNATURE = 'ff'
 class SerializationError(Exception):
     """ Thrown when there's a problem deserializing or serializing """
 
+class InputValueMissing(Exception):
+    """ thrown when the value of an input is needed but not present """
+
 class BCDataStream(object):
     def __init__(self):
         self.input = None
@@ -677,7 +680,7 @@ class Transaction:
             pkh = bitcoin.hash_160(pubkey.decode('hex')).encode('hex')
             return '76a9' + push_script(pkh) + '88ac'
         else:
-            raise TypeError('Unknown txin type', _type)
+            raise TypeError('Unknown txin type', txin['type'])
 
     @classmethod
     def serialize_outpoint(self, txin):
@@ -706,9 +709,10 @@ class Transaction:
         s += script
         return s
 
-    def nHashType(self):
+    @classmethod
+    def nHashType(cls):
         '''Hash type in hex.'''
-        return 0x01 | (self.SIGHASH_FORKID + (self.FORKID << 8))
+        return 0x01 | (cls.SIGHASH_FORKID + (cls.FORKID << 8))
 
     def serialize_preimage(self, i):
         nVersion = int_to_hex(self.version, 4)
@@ -724,7 +728,10 @@ class Transaction:
             outpoint = self.serialize_outpoint(txin)
             preimage_script = self.get_preimage_script(txin)
             scriptCode = var_int(len(preimage_script) / 2) + preimage_script
-            amount = int_to_hex(txin['value'], 8)
+            try:
+                amount = int_to_hex(txin['value'], 8)
+            except KeyError:
+                raise InputValueMissing
             nSequence = int_to_hex(txin.get('sequence', 0xffffffff - 1), 4)
             preimage = nVersion + hashPrevouts + hashSequence + outpoint + scriptCode + amount + nSequence + hashOutputs + nLocktime + nHashType
         else:
@@ -782,9 +789,6 @@ class Transaction:
 
     def get_fee(self):
         return self.input_value() - self.output_value()
-
-    def is_final(self):
-        return not any([x.get('sequence', 0xffffffff - 1) < 0xffffffff - 1 for x in self.inputs()])
 
     @profiler
     def estimated_size(self):

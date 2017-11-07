@@ -23,11 +23,11 @@
 # CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from electrum.i18n import _
+from electroncash.i18n import _
 
-import PyQt4
-from PyQt4.QtGui import *
-from PyQt4.QtCore import *
+import PyQt5
+from PyQt5.QtGui import *
+from PyQt5.QtCore import *
 
 from util import *
 from history_list import HistoryList

@@ -1,17 +1,18 @@
 from functools import partial
 import threading
 
-from PyQt4.Qt import Qt
-from PyQt4.Qt import QGridLayout, QInputDialog, QPushButton
-from PyQt4.Qt import QVBoxLayout, QLabel, SIGNAL
-from electrum_gui.qt.util import *
+from PyQt5.Qt import Qt
+from PyQt5.Qt import QGridLayout, QInputDialog, QPushButton
+from PyQt5.Qt import QVBoxLayout, QLabel
+from electroncash_gui.qt.util import *
+
 from .plugin import TIM_NEW, TIM_RECOVER, TIM_MNEMONIC
 from ..hw_wallet.qt import QtHandlerBase, QtPluginBase
 
-from electrum.i18n import _
-from electrum.plugins import hook, DeviceMgr
-from electrum.util import PrintError, UserCancelled
-from electrum.wallet import Wallet, Standard_Wallet
+from electroncash.i18n import _
+from electroncash.plugins import hook, DeviceMgr
+from electroncash.util import PrintError, UserCancelled
+from electroncash.wallet import Wallet, Standard_Wallet
 
 PASSPHRASE_HELP_SHORT =_(
     "Passphrases allow you to access new wallets, each "
@@ -242,7 +243,7 @@ class QtPlugin(QtPluginBase):
             else:
                 msg = _("Enter the master private key beginning with xprv:")
                 def set_enabled():
-                    from electrum.keystore import is_xprv
+                    from electroncash.keystore import is_xprv
                     wizard.next_button.setEnabled(is_xprv(clean_text(text)))
                 text.textChanged.connect(set_enabled)
                 next_enabled = False
@@ -377,7 +378,7 @@ class SettingsDialog(WindowModalDialog):
         def change_homescreen():
             from PIL import Image  # FIXME
             dialog = QFileDialog(self, _("Choose Homescreen"))
-            filename = dialog.getOpenFileName()
+            filename, __ = dialog.getOpenFileName()
             if filename:
                 im = Image.open(str(filename))
                 if im.size != (hs_cols, hs_rows):

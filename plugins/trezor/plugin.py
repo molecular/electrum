@@ -5,14 +5,14 @@ import threading
 from binascii import hexlify, unhexlify
 from functools import partial
 
-from electrum.bitcoin import (bc_address_to_hash_160, xpub_from_pubkey,
+from electroncash.bitcoin import (bc_address_to_hash_160, xpub_from_pubkey,
                               public_key_to_p2pkh, EncodeBase58Check,
                               TYPE_ADDRESS, TYPE_SCRIPT,
                               ADDRTYPE_P2PKH, ADDRTYPE_P2SH)
-from electrum.i18n import _
-from electrum.plugins import BasePlugin, hook
-from electrum.transaction import deserialize, Transaction
-from electrum.keystore import Hardware_KeyStore, is_xpubkey, parse_xpubkey
+from electroncash.i18n import _
+from electroncash.plugins import BasePlugin, hook
+from electroncash.transaction import deserialize, Transaction
+from electroncash.keystore import Hardware_KeyStore, is_xpubkey, parse_xpubkey
 
 from ..hw_wallet import HW_PluginBase
 
@@ -29,14 +29,7 @@ class TrezorCompatibleKeyStore(Hardware_KeyStore):
         return self.plugin.get_client(self, force_pair)
 
     def decrypt_message(self, sequence, message, password):
-        raise RuntimeError(_('Electrum and %s encryption and decryption are currently incompatible') % self.device)
-        client = self.get_client()
-        address_path = self.get_derivation() + "/%d/%d"%sequence
-        address_n = client.expand_path(address_path)
-        payload = base64.b64decode(message)
-        nonce, message, msg_hmac = payload[:33], payload[33:-8], payload[-8:]
-        result = client.decrypt_message(address_n, nonce, message, msg_hmac)
-        return result.message
+        raise RuntimeError(_('Encryption and decryption are not implemented by %s') % self.device)
 
     def sign_message(self, sequence, message, password):
         client = self.get_client()

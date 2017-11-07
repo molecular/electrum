@@ -23,14 +23,15 @@
 # CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from PyQt4.QtGui import *
-from PyQt4.QtCore import *
-from electrum.i18n import _
+from PyQt5.QtGui import *
+from PyQt5.QtCore import *
+from electroncash.i18n import _
 from util import *
+
 import re
 import math
 
-from electrum.plugins import run_hook
+from electroncash.plugins import run_hook
 
 def check_password_strength(password):
 
